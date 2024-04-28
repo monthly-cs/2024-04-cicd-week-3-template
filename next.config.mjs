@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  output: "standalone",
+  
+  assetPrefix: "/app/"
+};
 
 import withBundleAnalyzer from "@next/bundle-analyzer";
 

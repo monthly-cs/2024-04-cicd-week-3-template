@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+### Get Started
 
-First, run the development server:
+```shell
+# 1.
+docker build -t monthly-cs-ecr-next-server .
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 2. ECR 인증용 비밀번호 조회
+aws ecr get-login-password --region us-east-1 --profile monthly-cs
+
+# 3. AWS_ACCOUNT_ID 조회
+aws sts get-caller-identity --query "Account" --output text --profile monthly-cs
+
+# 4. docker login
+docker login --username AWS <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+docker login --username AWS 미야옹.dkr.ecr.us-east-1.amazonaws.com
+
+# 5.
+docker tag monthly-cs-ecr-next-server:latest 미야옹.dkr.ecr.us-east-1.amazonaws.com/monthly-cs-ecr-next-server:latest
+# docker run -p 3000:3000 monthly-cs-ecr-next-server
+
+# 6.
+docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/monthly-cs-ecr-next-server:latest
+docker push 미야옹.dkr.ecr.us-east-1.amazonaws.com/monthly-cs-ecr-next-server:latest
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### /public 안나오는 법
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Luke - 
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```
+아래 경로의 파일을
+C:\monthly-cs\2024-04-cicd-week-3-template\public
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+아래와 같이 복사 붙여넣기
+C:\monthly-cs\2024-04-cicd-week-3-template\.next\standalone\public
+```
