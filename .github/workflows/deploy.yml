@@ -1,0 +1,57 @@
+name: 배포 자동화
+
+on:
+  push:
+    branches: ["*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Node v
+        run: node -v
+    
+      - name: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: Install Dependencies
+        run : yarn install
+      
+      - name: Build 
+        run : yarn build
+      
+      - name: Upload to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY  }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY  }}
+        run:
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Build Docker Image
+        run:
+          docker build -t monthly-cs-ecr-next-server .
+
+      - name: Tag Docker Image
+        run:
+          docker tag monthly-cs-ecr-next-server:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/monthly-cs-ecr-next-server:latest
+
+      - name: Push Docker Image
+        run:
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/monthly-cs-ecr-next-server:latest
+
+      - name: Deploy Lambda
+        run:
+          aws lambda update-function-code \
+            --function-name monhtly-cs-lambda-function-next-server \
+            --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.region.amazonaws.com/monthly-cs-ecr-next-server:latest
+
+          # aws ecr list-images --repository-name monthly-cs-ecr-next-server --query imageIds[0].imageTag --region us-east-1
+
+      - name: Invalidate CloudFront Cache
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: true
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CF_DIST_ID  }} --paths "/*"
